@@ -99,7 +99,15 @@ urlpatterns = [
     
     path('ajout_reservation_salle_client/',views.ajout_reservation_salle_client, name="ajout_reservation_salle_client"),
     path('ajout_reservation_table_client/',views.ajout_reservation_table_client, name="ajout_reservation_table_client"),
+  #------------------------------------------------------Recherche--------------------------------------------------------------------------------------------------------
   
+  path('rechercher_salle/', views.rechercher_salle, name="rechercher_salle"), 
+    
+    path('rechercher_table/', views.rechercher_table, name="rechercher_table"),
+    
+    path('rechercher_client/', views.rechercher_client, name="rechercher_client"), 
+   
+   
 
 
 ]

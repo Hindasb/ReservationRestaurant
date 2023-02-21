@@ -1,8 +1,26 @@
+from ast import Or
+from contextlib import redirect_stderr
+import email
+from genericpath import exists
+from multiprocessing import context
+from urllib.request import Request
+from webbrowser import Opera
+from xmlrpc.client import boolean
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate
+from django.http import HttpResponse
+from django.contrib.auth import authenticate,login as auth_login,logout
 from datetime import *
+from django.db.models import Count
 from django.shortcuts import render
+
+import Reservation
+
+
 from .models import * 
+
+from django.http import HttpResponseRedirect
+
+
 
 #---------------LOGIN----------------
 def login(request):
@@ -107,6 +125,8 @@ def reservation_salle_table(request):
 #--------------------------------------------------------------------------------------------------------------------------------------
 
 def salle(request):
+    n=""
+    s=""
     salle = Salle.objects.all()
     res_salle = Reservation_salle.objects.all()
     for s in res_salle:
@@ -125,15 +145,15 @@ def salle(request):
 #------------------------------------------------------------------table----------------------------------------------------------------
 
 def table(request):
-    K=1
-    l=4
+    k=""
+    l=""
     table = Table.objects.all()
     res_table = Reservation_table.objects.all()
     for k in  res_table:
         l = k.table.id
         print(l)
-   
-        context = {'table':table,
+
+    context = {'table':table,
                'res_table' : res_table,
                'k' : k,
                'l' :  l,
@@ -501,6 +521,63 @@ def vos_reservation_table(request):
 
 def vos_reservation_salle_table(request):
     return render(request, 'Reservation/Vos_reservation_salle_table.html')
+
+#------------------------------------------------recherche client-----------------------------------------
+
+def rechercher_client(request):
+    if request.method=="POST":
+        tel = request.POST['tel']  
+        try:
+            re = Client.objects.get(tel = tel)
+            print(re.nom)
+            context ={'tel' : tel,
+                     're' : re}
+            return render(request, 'Reservation/Rechercher_client.html',context)
+        except:
+           return render(request, 'Reservation/Rechercher_client.html',{})
+    else: 
+        return render(request, 'Reservation/Rechercher_client.html',{})
+    
+
+#-------------------------------------------------recherche salle-----------------------------------------
+
+def rechercher_salle(request):
+    if request.method=="POST":
+        numero = request.POST['numero']  
+        try:
+            re = Salle.objects.get(numero = numero)
+            print(re.numero)
+            salle = Salle.objects.all()
+            res_salle = Reservation_salle.objects.all()
+            context = {'numero' : numero,
+                     're' : re,
+                     'salle':salle,
+                    'res_salle' : res_salle,
+                    'Reserver' : "Reserver",
+                    'Non_Reserver' : "Non Reserver"}
+            
+            return render(request, 'Reservation/Rechercher_salle.html',context)
+        except:
+           return render(request, 'Reservation/Rechercher_salle.html',{})
+    else: 
+        return render(request, 'Reservation/Rechercher_salle.html',{})
+    
+    
+#------------------------------------------------recherche table-----------------------------------------
+
+def rechercher_table(request):
+    if request.method=="POST":
+        numero = request.POST['numero']  
+        try:
+            re = Table.objects.get(numero = numero)
+            print(re.numero)
+            context ={'numero' : numero,
+                     're' : re}
+            return render(request, 'Reservation/Rechercher_table.html',context)
+        except:
+           return render(request, 'Reservation/Rechercher_table.html',{})
+    else: 
+        return render(request, 'Reservation/Rechercher_table.html',{})
 
 
 
