@@ -1,19 +1,13 @@
 from ast import Or
-from contextlib import redirect_stderr
-import email
 from genericpath import exists
 from multiprocessing import context
-from urllib.request import Request
 from webbrowser import Opera
 from xmlrpc.client import boolean
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
 from django.contrib.auth import authenticate,login as auth_login,logout
 from datetime import *
-from django.db.models import Count
 from django.shortcuts import render
 
-import Reservation
 
 
 from .models import * 
@@ -21,26 +15,17 @@ from .models import *
 from django.http import HttpResponseRedirect
 
 
-
-#---------------LOGIN----------------
-def login(request):
-    if request.method == "POST":
-        user = request.POST['username']
-        passs = request.POST['password']
-        user = authenticate(username=user, password=passs)
-        if user is not None:
-            if user.is_superuser:
-                
-                return redirect("/home")
-        else:   
-            msg = "Les données sont  erronés,ressayer"
-            return render(request, "Reservation/Login.html", {"msg":msg})
-    
-    return render (request, 'Reservation/Login.html')
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------Debut Fonction Partie Admin ou Agent-------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+##-------------------------------------------------------------Fonction admin ou agent-----------------------------------------------------------------
 
 
 
 
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------- Fonction Navbar---------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 #--------------------------------------------------------------------Home---------------------------------------------------------------------------
@@ -125,8 +110,6 @@ def reservation_salle_table(request):
 #--------------------------------------------------------------------------------------------------------------------------------------
 
 def salle(request):
-    n=""
-    s=""
     salle = Salle.objects.all()
     res_salle = Reservation_salle.objects.all()
     for s in res_salle:
@@ -145,14 +128,11 @@ def salle(request):
 #------------------------------------------------------------------table----------------------------------------------------------------
 
 def table(request):
-    k=""
-    l=""
     table = Table.objects.all()
     res_table = Reservation_table.objects.all()
     for k in  res_table:
         l = k.table.id
         print(l)
-
     context = {'table':table,
                'res_table' : res_table,
                'k' : k,
@@ -171,6 +151,7 @@ def table(request):
 def client(request):
     client = Client.objects.all()
     return render(request, 'Reservation/Client.html',{'client':client})
+
 
 
 
@@ -409,118 +390,10 @@ def supprimer_reservation_salle_table(request, myid,mid):
 
 
 
+#------------------------------------------------------------------------------------------------------
+#------------------------------------------------FONCTION RECHCERCHE-----------------------------------------
+#------------------------------------------------------------------------------------------------------
 
-#-----------------------------------------------------Home ----------------------------------------------------
-
-
-def client_home(request):
-    return render(request, 'Reservation/TabledebordClient.html')
-
-
-#----------------------------------------------------Vos-Rservation----------------------------------------------------
-
-
-def vos_reservation(request):
-    return render(request, 'Reservation/Vos_reservation.html')
-
-
-
-#----------------------------------------------------Contactez-Nous-------------------------------------------------------
-
-
-def contactez_nous(request):
-    return render(request, 'Reservation/Contactez_nous.html')
-
-
-
-
-
-
-#---------------------------------------------------------------------------------------------------------------
-#-------------------------------------------------------------FONCTION DE L AJOUT------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------
-
-
-#-------------------------------------------------------------ajout reservation table client ----------------------------------
-
-
-def ajout_reservation_table_client(request):
-    if request.method=="POST":   
-        nom = request.POST['nom']
-        prenom = request.POST['prenom']
-        tel = request.POST['tel']
-        email = request.POST['email']
-        iddd = request.POST['idd']
-        date_reservation = request.POST['date_reservation']
-        try:
-            
-           table = Table.objects.get(id=iddd)
-        
-           if date_reservation  != Reservation_table.date_reservation :
-              client = Client.objects.create(nom=nom, prenom=prenom, tel=tel, email=email)
-              r = Reservation_table.objects.create(client = client, table=table, date_reservation = date_reservation )
-              client.save()
-              r.save() 
-              idd = r.id
-              return render(request, 'Reservation/impression_table.html',{'idd': idd}) 
-           else:
-              return render(request, 'Reservation/Salle.html')  
-        except:
-            res = {'msg' : 1}
-            return render(request, 'Reservation/Salle.html',{'res' : res})  
-    tables = Table.objects.all()
-    return render(request,'Reservation/Ajout_reservation_table_Client.html',{'tables' : tables} )
-
-
-#-----------------------------------------------------------ajout reservation salle client -------------------------------------------
-
-
-def ajout_reservation_salle_client(request):
-    if request.method=="POST":   
-        nom = request.POST['nom']
-        prenom = request.POST['prenom']
-        tel = request.POST['tel']
-        email = request.POST['email']
-        iddd = request.POST['idd']
-        date_reservation = request.POST['date_reservation']
-        salle = Salle.objects.get(id=iddd)
-        client = Client.objects.create(nom=nom, prenom=prenom, tel=tel, email=email)
-        r = Reservation_salle.objects.create(client = client, salle=salle, date_reservation = date_reservation)
-        client.save()
-        r.save()
-        idd = r.id;
-        #return render (request, 'Reservation/impression_salle.html', {'idd': idd}) 
-    salles = Salle.objects.all()
-    return render(request, 'Reservation/Ajout_reservation_salle_Client.html',{'salles':salles})
-
-
-#----------------------------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------------- FONCTION RESERVATION---------------------------------------------
-#------------------------------------------------------------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------Reservation client----------------------------
-
-def reservation_client(request):
-    return render(request, 'Reservation/Ajout_Reservation.html')
-
-
-#------------------------------------------------------------------------vos reservation salle pour "client"-----------------------------------
-
-def vos_reservation_salle(request):
-    
-    return render(request, 'Reservation/Vos_reservation_salle.html')
-
-#-------------------------------------------------------------------------vos reservation table pour "client"-----------------------------------
-
-def vos_reservation_table(request):
-    
-    return render(request, 'Reservation/Vos_reservation_table.html')
-
-
-#------------------------------------------------------------------------vos reservation salle table pour "client"-----------------------------------
-
-def vos_reservation_salle_table(request):
-    return render(request, 'Reservation/Vos_reservation_salle_table.html')
 
 #------------------------------------------------recherche client-----------------------------------------
 
@@ -580,9 +453,499 @@ def rechercher_table(request):
         return render(request, 'Reservation/Rechercher_table.html',{})
 
 
+#------------------------------------------------recherche reservation salle-----------------------------------------
+
+ 
+def rechercher_reservation_salle(request):
+    if request.method=="POST":
+        tel = request.POST['tel']     
+        try:
+            
+           client = Client.objects.get(tel=tel)
+           
+           salle = Reservation_salle.objects.get(client=client)
+           print(salle.salle.numero)
+           date_s = Reservation_salle.objects.get(client=client)
+           print(date_s.date_reservation)
+           cl = Reservation_salle.objects.get(client=client)
+           print(cl.client.nom)
+           idd = salle.id
+           reservation = {'tel' : tel,
+                        'client' : client,
+                        'tel' : tel,                             
+                        'salle' : salle,                             
+                        'date_s' : date_s,
+                        'idd' : idd }
+           
+           return render (request , 'Reservation/Rechercher_reservation_salle.html',reservation )
+          
+        except:
+            return render (request , 'Reservation/Rechercher_reservation_salle.html', {})
+    else:    
+        return render (request , 'Reservation/Rechercher_reservation_salle.html', {})
+    
+
+
+#------------------------------------------------recherche reservation table-----------------------------------------
 
 
 
+def rechercher_reservation_table(request):
+    if request.method=="POST":
+        tel = request.POST['tel']     
+        try:
+            
+           client = Client.objects.get(tel=tel)
+           
+           table = Reservation_table.objects.get(client=client)
+           print(table.table.numero)
+           date_s = Reservation_table.objects.get(client=client)
+           print(date_s.date_reservation)
+           cl = Reservation_table.objects.get(client=client)
+           print(cl.client.nom)
+           idd = table.id
+           reservation = {'tel' : tel,
+                        'client' : client,
+                        'tel' : tel,                             
+                        'table' : table,                             
+                        'date_s' : date_s,
+                        'cl' : 'cl',
+                        'idd' : idd }
+           
+           return render (request , 'Reservation/Rechercher_reservation_table.html',reservation )
+          
+        except:
+            return render (request , 'Reservation/Rechercher_reservation_table.html', {})
+    else:    
+        return render (request , 'Reservation/Rechercher_reservation_table.html', {})
+    
+
+
+#------------------------------------------------recherche reservation salle table-----------------------------------------
+
+
+
+def rechercher_reservation_salle_table(request):
+    if request.method=="POST":
+        tel = request.POST['tel']     
+        try:
+            
+           client = Client.objects.get(tel=tel)
+           print(client.nom)
+           if Reservation_salle.objects.get(client=client) and Reservation_table.objects.get(client=client) :
+               salle = Reservation_salle.objects.get(client=client) 
+               print(salle.salle.numero)
+           
+               date_salle = Reservation_salle.objects.get(client=client)
+               print(date_salle.date_reservation)
+           
+               cll = Reservation_salle.objects.get(client=client)
+               print(cll.client.nom)
+               
+               table = Reservation_table.objects.get(client=client)
+               print(table.table.numero)
+           
+               date_table = Reservation_table.objects.get(client=client)
+               print(date_table.date_reservation)
+           
+               cl = Reservation_table.objects.get(client=client)
+               print(cl.client.nom)
+               idd = table.id
+               iddd = salle.id
+               reservation = {'tel' : tel,
+                        'client' : client,
+                        'tel' : tel,  
+                        'salle' : salle, 
+                        'date_salle' : date_salle,   
+                        'cll' : cll,                   
+                        'table' : table,                             
+                        'date_table' : date_table,
+                        'cl' : 'cl',
+                        'idd' : idd,
+                        'iddd' : iddd
+                        }
+           
+               return render (request , 'Reservation/Rechercher_reservation_salle_table.html',reservation )
+          
+        except:
+            return render (request , 'Reservation/Rechercher_reservation_salle_table.html', {})
+    else:    
+        return render (request , 'Reservation/Rechercher_reservation_salle_table.html', {})
+    
+
+
+
+
+#---------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------Fonction impression--------------------------------------------------------------- 
+#-------------------------------------------------------------------------------------------------------------------------
+
+
+#----------------------------------------------------------impression table admin--------------------------
+
+
+def impression_table_admin(request):
+    
+    return render (request, 'Reservation/impression_table_admin.html')
+
+#----------------------------------------------------------impression salle admin-------------------------------------
+
+def impression_salle_admin(request,myid):
+    reservation = Reservation_salle.object.get(id=myid)
+    t = Reservation_salle.object.all()
+    return render (request, 'Reservation/impression_salle_admin.html',{'reservation' : reservation},{'t':t})
+
+
+
+
+#---------------------------------------------------------------------------------------------------------------------------------------------
+#------------------------------------fin----fin-------fin----fin-fin------------------------------------------------------------------------
+##-----------------------------------fin fonction partie admin ou agent -----------------------------------## ------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------
+
+
+############_____________-----------------------PARTIE CLIENT ----------------------------
+
+#---------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------
+#########################d------------debut fonction pour partie client ---------------#---------------------------#############
+#-----------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------
+
+
+
+#-----------------------------------------------------------------------------------------------------------
+#-------------------------------------------FONCTION Navbar Client-------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------
+
+
+#-----------------------------------------------------Home ----------------------------------------------------
+
+
+def client_home(request):
+    return render(request, 'Reservation/TabledebordClient.html')
+
+
+#----------------------------------------------------Vos-Rservation----------------------------------------------------
+
+
+def vos_reservation(request):
+    return render(request, 'Reservation/Vos_reservation.html')
+
+
+
+#----------------------------------------------------Contactez-Nous-------------------------------------------------------
+
+
+def contactez_nous(request):
+    return render(request, 'Reservation/Contactez_nous.html')
+
+
+#--#---------------------------------------------------Connecter------------------------------------------------------------
+
+
+def login(request):
+    if request.method == "POST":
+        user = request.POST['username']
+        passs = request.POST['password']
+        user = authenticate(username=user, password=passs)
+        if user is not None:
+            if user.is_superuser:
+                
+                return redirect("/home")
+        else:   
+            msg = "Les données sont  erronés,ressayer"
+            return render(request, "Reservation/Login.html", {"msg":msg})
+    
+    return render (request, 'Reservation/Login.html')
+
+
+
+
+#---------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------FONCTION DE L AJOUT------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------ajout reservation table client ----------------------------------
+
+
+def ajout_reservation_table_client(request):
+    if request.method=="POST":   
+        nom = request.POST['nom']
+        prenom = request.POST['prenom']
+        tel = request.POST['tel']
+        email = request.POST['email']
+        iddd = request.POST['idd']
+        date_reservation = request.POST['date_reservation']
+        try:
+            
+           table = Table.objects.get(id=iddd)
+        
+           if date_reservation  != Reservation_table.date_reservation :
+              client = Client.objects.create(nom=nom, prenom=prenom, tel=tel, email=email)
+              r = Reservation_table.objects.create(client = client, table=table, date_reservation = date_reservation )
+              client.save()
+              r.save() 
+              idd = r.id
+              return render(request, 'Reservation/impression_table.html',{'idd': idd}) 
+           else:
+              return render(request, 'Reservation/Salle.html')  
+        except:
+            res = {'msg' : 1}
+            return render(request, 'Reservation/Salle.html',{'res' : res})  
+    tables = Table.objects.all()
+    return render(request,'Reservation/Ajout_reservation_table_Client.html',{'tables' : tables} )
+
+
+#-----------------------------------------------------------ajout reservation salle client -------------------------------------------
+
+
+def ajout_reservation_salle_client(request):
+    if request.method=="POST":   
+        nom = request.POST['nom']
+        prenom = request.POST['prenom']
+        tel = request.POST['tel']
+        email = request.POST['email']
+        iddd = request.POST['idd']
+        date_reservation = request.POST['date_reservation']
+        salle = Salle.objects.get(id=iddd)
+        client = Client.objects.create(nom=nom, prenom=prenom, tel=tel, email=email)
+        r = Reservation_salle.objects.create(client = client, salle=salle, date_reservation = date_reservation)
+        client.save()
+        r.save()
+        idd = r.id;
+        return render (request, 'Reservation/impression_salle.html', {'idd': idd}) 
+    salles = Salle.objects.all()
+    return render(request, 'Reservation/Ajout_reservation_salle_Client.html',{'salles':salles})
+
+
+#----------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------- FONCTION RESERVATION---------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------Reservation client----------------------------
+
+def reservation_client(request):
+    return render(request, 'Reservation/Ajout_Reservation.html')
+
+
+#------------------------------------------------------------------------vos reservation salle pour "client"-----------------------------------
+
+def vos_reservation_salle(request):
+    
+    return render(request, 'Reservation/Vos_reservation_salle.html')
+
+#-------------------------------------------------------------------------vos reservation table pour "client"-----------------------------------
+
+def vos_reservation_table(request):
+    
+    return render(request, 'Reservation/Vos_reservation_table.html')
+
+
+#------------------------------------------------------------------------vos reservation salle table pour "client"-----------------------------------
+
+def vos_reservation_salle_table(request):
+    return render(request, 'Reservation/Vos_reservation_salle_table.html')
+
+
+
+
+#----------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------- FONCTION RECHERCHE---------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------------
+
+
+#------------------------------------------------------------cherche reservation client qui reserve salle et table en m temp--------------------------
+
+
+def cherche_reservation_client_salle_table(request):
+     if request.method == "POST":
+           tel = request.POST['tel']
+           reservation = {}
+          
+           try:
+                client = Client.objects.get(tel=tel)  
+                print(client.nom) 
+                print(client.prenom)
+               
+                if Reservation_table.objects.get(client=client) and Reservation_salle.objects.get(client=client): 
+                    
+                    table = Reservation_table.objects.get(client=client)
+                    print(table.table.numero)
+                    print(table.table.salle.numero)
+                    date = Reservation_table.objects.get(client=client)
+                    print(date.date_reservation)
+                    salle = Reservation_salle.objects.get(client=client)
+                    print(salle.salle.numero)
+                    date_s = Reservation_salle.objects.get(client=client)
+                    print(date_s.date_reservation)
+                    
+                    id_t = Reservation_table.objects.get(client=client) 
+                    id_ta = (id_t.id) 
+                    id_s = Reservation_salle.objects.get(client=client) 
+                    id_sa = (id_s.id)
+                    
+                    
+                    reservation = {'tel' : tel,
+                                'client' : client,
+                                'table' : table,                             
+                                'date' : date,
+                                'salle' : salle,                             
+                                'date_s' : date_s,
+                                'id_t' : id_t,
+                                'id_ta' : id_ta,
+                                 'id_s' : id_s,
+                                'id_sa' : id_sa,
+                                'msg' : 1 }
+                     
+                    return render(request, 'Reservation/cherche_reservation_client_salle_table.html',reservation)
+            
+           except:
+               reservation = {'msg' : "ne existe pas"}
+               return render(request, 'Reservation/cherche_reservation_client_salle_table.html',reservation)
+                
+           
+                
+     return render(request, 'Reservation/cherche_reservation_client.html')
+
+
+#--------------------------------------------------cherche reservation client qui reserve des tables seulement-----------------------------------
+
+
+def cherche_reservation_client_table(request):
+    
+     if request.method == "POST":
+           tel = request.POST['tel']
+           reservation = {}
+          
+           try:
+                client = Client.objects.get(tel=tel)  
+                print(client.nom) 
+                print(client.prenom)
+               
+                if Reservation_table.objects.get(client=client) : 
+
+                    table = Reservation_table.objects.get(client=client)
+                    
+                    print(table.table.numero)
+                    print(table.table.salle.numero)
+                    date = Reservation_table.objects.get(client=client)
+                    print(date.date_reservation)
+                    idd = Reservation_table.objects.get(client=client)
+                    iddd = idd.id
+                    reservation = {'tel' : tel,
+                                'client' : client,
+                                'table' : table,                             
+                                'date' : date,
+                                'iddd' : iddd,
+                                'msg' : 1}
+                     
+                    return render(request, 'Reservation/cherche_reservation_client_table.html',reservation)
+            
+           except:
+                  reservation = {'msg' : "ne existe pas"}
+                  return render(request, 'Reservation/cherche_reservation_client_table.html',reservation)
+    
+    
+     return render(request, 'Reservation/cherche_reservation_client_table.html')           
+
+
+#------------------------------------------------cherche reservation client qui reserve des salle-----------------------------
+
+
+def cherche_reservation_client_salle(request):
+    
+     if request.method == "POST":
+           tel = request.POST['tel']
+           reservation = {}
+          
+           try:
+                client = Client.objects.get(tel=tel)  
+                print(client.nom) 
+                print(client.prenom)
+               
+                if Reservation_salle.objects.get(client=client) : 
+
+                    salle = Reservation_salle.objects.get(client=client)
+                    
+                    print(salle.salle.numero)
+                    date = Reservation_salle.objects.get(client=client)
+                    print(date.date_reservation)
+                    idd = Reservation_salle.objects.get(client=client)
+                    iddd = (idd.id)
+                    
+                    reservation = {'tel' : tel,
+                                'client' : client,
+                                'salle' : salle,                             
+                                'date' : date,
+                                'idd' : idd,
+                                'iddd' : iddd,
+                                'msg' : 1}
+                     
+                    return render(request, 'Reservation/cherche_reservation_client_salle.html',reservation)
+            
+           except:
+                  reservation = {'msg' : "ne existe pas"}
+                  return render(request, 'Reservation/cherche_reservation_client_salle.html',reservation)
+    
+    
+     return render(request, 'Reservation/cherche_reservation_client_salle.html')           
+
+
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------FONCTION BILLET OU TICKET--------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------
+
+#---------------------------------------------------fonction billet ou ticket---------- --------------------------
+
+def Billet(request):
+     
+    return render (request, 'Reservation/Billet.html')
+
+#----------------------------------------------------fonction billet ou ticket du reservation de salle-------------------------------
+
+
+def Billet_salle(request,myid):
+    billet = Reservation_salle.objects.get(id = myid)
+    date = datetime.now 
+    return render (request, 'Reservation/Billet_salle.html',{'billet':billet,'date':date})
+
+#----------------------------------------------------fonction billet ou ticket du reservation de table-------------------------------
+
+
+def Billet_table(request,myid):
+    billet = Reservation_table.objects.get(id = myid)
+    date = datetime.now 
+    return render (request, 'Reservation/Billet_table.html',{'billet':billet,'date':date})
+
+#--------------------------------------------fonction billet ou ticket de reservation du table et salle en m temp-------------------------------
+
+
+def Billet_salle_table(request,myid,mid):
+    try:
+       if Reservation_salle.objects.get(id=myid) and  Reservation_table.objects.get(id=mid) :
+          billet_salle = Reservation_salle.objects.get(id=myid)
+          print(billet_salle.client.nom)
+          print(billet_salle.client.prenom)
+          print(billet_salle.salle.numero)
+          date = datetime.now 
+          billet_table = Reservation_table.objects.get(id=mid)
+          print(billet_table.table.numero)
+          context = {'billet_salle' : billet_salle,
+                     'date' : date,
+                     'billet_table' : billet_table
+                    }
+          return render (request, 'Reservation/Billet_salle_table.html',context)
+       return render (request, 'Reservation/Billet_salle_table.html',context)
+    
+    except:
+        return render (request, 'Reservation/Billet_salle_table.html',{})
+ 
+       
 
 
 

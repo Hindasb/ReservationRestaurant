@@ -8,7 +8,7 @@ from django.urls import path
 
 urlpatterns = [
 
-    path('', views.login, name="login"),
+    path('connection', views.login, name="login"),
 
 #-------------------------------------------------------------urls Navbar----------------------------------------------------------
     
@@ -76,7 +76,7 @@ urlpatterns = [
 
 ##-------------------------------------------------------------- Home -----------------------------------------------------------------
     
-    path('client_home/',views.client_home, name="client_home"),
+    path('',views.client_home, name="client_home"),
     path('reservation_client/',views.reservation_client, name="reservation_client"),
     
 ##------------------------------------------------------------Vos-Reservation-----------------------------------------------------------------
@@ -89,7 +89,13 @@ urlpatterns = [
     
       
     
+  ##-----------------------------------------------------Recherche pour partie client----------------------------------------------------------------------
+   
     
+    path('cherche_reservation_client_salle/', views.cherche_reservation_client_salle, name="cherche_reservation_client_salle"),
+    path('cherche_reservation_client_table/', views.cherche_reservation_client_table, name="cherche_reservation_client_table"),
+    path('cherche_reservation_client_salle_table/',views.cherche_reservation_client_salle_table, name="cherche_reservation_client_salle_table"),
+      
 ##------------------------------------------------------------Contactez-Nous-----------------------------------------------------------------
     
     path('contactez_nous/',views.contactez_nous, name="contactez_nous"),
@@ -101,11 +107,20 @@ urlpatterns = [
     path('ajout_reservation_table_client/',views.ajout_reservation_table_client, name="ajout_reservation_table_client"),
   #------------------------------------------------------Recherche--------------------------------------------------------------------------------------------------------
   
-  path('rechercher_salle/', views.rechercher_salle, name="rechercher_salle"), 
+  
+    path('rechercher_reservation_salle/',views.rechercher_reservation_salle, name="rechercher_reservation_salle"),
+    
+    path('rechercher_reservation_table/',views.rechercher_reservation_table, name="rechercher_reservation_table"),
+    
+    path('rechercher_reservation_salle_table/',views.rechercher_reservation_salle_table, name="rechercher_reservation_salle_table"),
+
+    
+    path('rechercher_salle/', views.rechercher_salle, name="rechercher_salle"), 
     
     path('rechercher_table/', views.rechercher_table, name="rechercher_table"),
     
     path('rechercher_client/', views.rechercher_client, name="rechercher_client"), 
+   
    
    
 

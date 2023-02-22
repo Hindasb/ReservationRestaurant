@@ -68,7 +68,7 @@
   <div class="col-sm">
     <center>
      
-        <form class="d-flex ml-3" method="POST" action="{}" >
+      <form class="d-flex ml-3" method="POST" action="{% url 'rechercher_client'%}" >
           {% csrf_token %}
           <input style="width: 160px; height:47px; border-color: green text-black border-11px solid" placeholder="Entrer numero tel"  type="number" aria-label="search"id="tel" name="tel" required>
           
