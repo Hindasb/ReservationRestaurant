@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'Reservation.apps.ReservationConfig',
+    
 ]
 
 MIDDLEWARE = [
@@ -133,3 +134,6 @@ STATICFILES_DIRS = [
 ]
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'static/image')
+# LOGIN_url='login'
+#AUTH_USER_MODEL = "Reservation.User"
+GOOGLE_RECAPTCHA_SECRET_KEY= '6Ldq_9AZAAAAAEBLVbknRrtgQfTZVBcDZXNgG6jL'

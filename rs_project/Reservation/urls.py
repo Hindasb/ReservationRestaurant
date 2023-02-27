@@ -1,5 +1,6 @@
-from . import views
 
+from django.contrib.auth import views as authViews
+from . import views
 from django.urls import path
 
 #-------------------------------------------------------------Login----------------------------------------------------------------------------
@@ -8,17 +9,16 @@ from django.urls import path
 
 urlpatterns = [
 
-    path('connection', views.login, name="login"),
-
+    path('login/' ,views.userLogin, name="login"),
+    path('register/' ,views.register, name="register"),
 #-------------------------------------------------------------urls Navbar----------------------------------------------------------
-    
+    path('',views.client_home, name="client_home"),
     path('home/',views.home,name="home"),
     
     path('reservation/',views.reservation, name="reservation"),
     path('reservation_salle/',views.reservation_salle, name="reservation_salle"),
     path('reservation_table/',views.reservation_table, name="reservation_table"),
-    path('reservation_salle_table/',views.reservation_salle_table, name="reservation_salle_table"),
-   
+    
     path('salle/',views.salle,name="salle"),
     path('table/',views.table, name="table"),
     path('client/',views.client, name="client"),
@@ -121,6 +121,20 @@ urlpatterns = [
     
     path('rechercher_client/', views.rechercher_client, name="rechercher_client"), 
    
+   ##-----------------------------------------------------impression pour partie client----------------------------------------------------------------------
+   
+    path('impression_table/',views.impression_table, name="impression_table"),
+    path('impression_salle/',views.impression_salle, name="impression_salle"),
+
+
+##------------------------------------------------------Billet ou ticket partie client------------------------------------------
+
+    path('Billet/', views.Billet, name="Billet"),
+    path('Billet_salle/<int:myid>/', views.Billet_salle, name="Billet_salle"),
+    path('Billet_table/<int:myid>/', views.Billet_table, name="Billet_table"),
+    path('Billet_salle_table/<int:myid>/<int:mid>/', views.Billet_salle_table, name="Billet_salle_table"),
+    
+    
    
    
 

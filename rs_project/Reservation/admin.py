@@ -18,6 +18,7 @@ class res_salle(admin.ModelAdmin):
     affichage = ('salle')
 
 # Register your models here.
+
 admin.site.register(Client)
 admin.site.register(Salle)
 admin.site.register(Table)

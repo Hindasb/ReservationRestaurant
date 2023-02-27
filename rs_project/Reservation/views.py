@@ -1,20 +1,24 @@
 from ast import Or
 from genericpath import exists
 from multiprocessing import context
+from django.forms import inlineformset_factory
 from webbrowser import Opera
 from xmlrpc.client import boolean
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate,login as auth_login,logout
+
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import authenticate ,login  , logout 
 from datetime import *
 from django.shortcuts import render
-
-
-
+from django.contrib.auth.forms import UserCreationForm
+from .forms import *
 from .models import * 
+from django.contrib.auth.models import Group
+from django.contrib.auth.decorators import login_required
 
-from django.http import HttpResponseRedirect
-
-
+import requests
+from django.conf import settings
+from django.contrib import messages
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------Debut Fonction Partie Admin ou Agent-------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -26,39 +30,108 @@ from django.http import HttpResponseRedirect
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------- Fonction Navbar---------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+# def login(request):
+#     if request.method == "POST":
+#         user = request.POST['username']
+#         passs = request.POST['password']
+#         user = authenticate(username=user, password=passs)
+#         if user is not None:
+#             if user.is_superuser:
+                
+#                 return redirect("/home")
+#         else:   
+#             msg = "Les données sont  erronés,ressayer"
+#             return render(request, "Reservation/Login.html", {"msg":msg})
+    
+#     return render (request, 'Reservation/Login.html')
+
+def register(request):   
+            form = CreateNewUser()
+            if request.method == 'POST': 
+                   form = CreateNewUser(request.POST)
+                   if form.is_valid():
+
+                       recaptcha_response = request.POST.get('g-recaptcha-response')
+                       data = {
+                           'secret' : settings.GOOGLE_RECAPTCHA_SECRET_KEY,
+                           'response' : recaptcha_response
+                       }
+                       r = requests.post('https://www.google.com/recaptcha/api/siteverify',data=data)
+                       result = r.json()
+                       if result['success']:
+                           user = form.save()
+                           username = form.cleaned_data.get('username')
+                           messages.success(request , username + ' creer avec  Successe !')
+                           return redirect('login')
+                       else:
+                          messages.error(request ,  ' invalid Recaptcha please try again!')  
+ 
+        
+            context = {'form':form}
+
+            return render(request , 'Reservation/Registre.html', context )
+
+
+
+def userLogin(request):  
+
+        if request.method == 'POST': 
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            user = authenticate(request , username=username, password=password)
+            if user is not None:
+             login(request, user)
+             return redirect('home')
+            else:
+                messages.info(request, 'Erreur dinformation')
+    
+        context = {}
+
+        return render(request , 'Reservation/login.html', context )
+
+
+def userLogout(request):  
+    logout(request)
+    return redirect('login') 
+
+
+
+#----------------------regitre
 
 
 #--------------------------------------------------------------------Home---------------------------------------------------------------------------
 
-
 def home(request):
-    client = Client.objects.all()
-    table = Table.objects.all()
-    salle = Salle.objects.all()
-    resrevation_table = Reservation_table.objects.all()
-    resrevation_salle = Reservation_salle.objects.all()
-    nb_client = Client.objects.all().count()
-    nb_table = Table.objects.all().count()
-    nb_salle = Salle.objects.all().count()
-    nb_reservation_table = Reservation_table.objects.all().count()
-    nb_reservation_salle = Reservation_salle.objects.all().count()
-    nb_table_non_reserver = nb_table - nb_reservation_table
-    nb_salle_non_reserver = nb_salle - nb_reservation_salle
-    totale_reservations = nb_reservation_table + nb_reservation_salle
-    context = {'client' : client,
-               'table': table,
-               'salle': salle,
-               'resrevation_table' : resrevation_table,
-               'resrevation_salle' : resrevation_salle,
-               'nb_client' : nb_client,
-               'nb_table' : nb_table,
-               'nb_salle' : nb_salle,
-               'nb_reservation_table' : nb_reservation_table,
-               'nb_reservation_salle' : nb_reservation_salle,
-               'totale_reservations':totale_reservations,
-               'nb_table_non_reserver':nb_table_non_reserver,
-               'nb_salle_non_reserver' : nb_salle_non_reserver}
-    return render (request,'Reservation/Tabledebord.html ',context)
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        client = Client.objects.all()
+        table = Table.objects.all()
+        salle = Salle.objects.all()
+        resrevation_table = Reservation_table.objects.all()
+        resrevation_salle = Reservation_salle.objects.all()
+        nb_client = Client.objects.all().count()
+        nb_table = Table.objects.all().count()
+        nb_salle = Salle.objects.all().count()
+        nb_reservation_table = Reservation_table.objects.all().count()
+        nb_reservation_salle = Reservation_salle.objects.all().count()
+        nb_table_non_reserver = nb_table - nb_reservation_table
+        nb_salle_non_reserver = nb_salle - nb_reservation_salle
+        totale_reservations = nb_reservation_table + nb_reservation_salle
+        context = {'client' : client,
+                'table': table,
+                'salle': salle,
+                'resrevation_table' : resrevation_table,
+                'resrevation_salle' : resrevation_salle,
+                'nb_client' : nb_client,
+                'nb_table' : nb_table,
+                'nb_salle' : nb_salle,
+                'nb_reservation_table' : nb_reservation_table,
+                'nb_reservation_salle' : nb_reservation_salle,
+                'totale_reservations':totale_reservations,
+                'nb_table_non_reserver':nb_table_non_reserver,
+                'nb_salle_non_reserver' : nb_salle_non_reserver}
+        return render (request,'Reservation/Tabledebord.html ',context)
 
 
 #----------------------------------------------------------------------------------------------------------------------------------
@@ -68,39 +141,47 @@ def home(request):
 
 #--------------------------------------------------------------Reservation--------------------------------------------------
 
-  
+
 def reservation(request):
-    salle = Reservation_salle.objects.all()
-    table = Reservation_table.objects.all()
-    context = {'salle' : salle,
-               'table' : table}
-    return render( request, 'Reservation/Reservation.html',context)
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        salle = Reservation_salle.objects.all()
+        table = Reservation_table.objects.all()
+        context = {'salle' : salle,
+                'table' : table}
+        return render( request, 'Reservation/Reservation.html',context)
 
       
 #--------------------------------------------------------------Reservation-salle--------------------------------------------------
 
-       
 def reservation_salle(request):
-    reserv_salle = Reservation_salle.objects.all()
-    return render (request, 'Reservation/Reservation_salle.html',{'reserv_salle' : reserv_salle})
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        reserv_salle = Reservation_salle.objects.all()
+        return render (request, 'Reservation/Reservation_salle.html',{'reserv_salle' : reserv_salle})
 
 
 #--------------------------------------------------------------Reservation-table--------------------------------------------------
-   
+
 def reservation_table(request):
-    reserv_table = Reservation_table.objects.all()
-    return render(request, 'Reservation/Reservation_Table.html',{'reserv_table' : reserv_table})
-      
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        reserv_table = Reservation_table.objects.all()
+        return render(request, 'Reservation/Reservation_Table.html',{'reserv_table' : reserv_table})
+        
       
 #--------------------------------------------------------------Reservation-salle-table--------------------------------------------------
 
-       
-def reservation_salle_table(request):       
-    salle = Reservation_salle.objects.all()
-    table = Reservation_table.objects.all()
-    context = {'salle' : salle,
-               'table' : table}
-    return render( request, 'Reservation/Reservation_salle_table.html',context)
+
+# def reservation_salle_table(request):       
+#     salle = Reservation_salle.objects.all()
+#     table = Reservation_table.objects.all()
+#     context = {'salle' : salle,
+#                'table' : table}
+#     return render( request, 'Reservation/Reservation_salle_table.html',context)
 
 
 
@@ -110,36 +191,43 @@ def reservation_salle_table(request):
 #--------------------------------------------------------------------------------------------------------------------------------------
 
 def salle(request):
-    salle = Salle.objects.all()
-    res_salle = Reservation_salle.objects.all()
-    for s in res_salle:
-        n = s.salle.id
-        print(n)
-               
-    reservation = {'salle':salle,
-                  'res_salle' : res_salle,
-                  'n' : n,
-                  's' : s,
-                  'Reserver' : "Reserver",
-                  'Non_Reserver' : "Non Reserver"}
-    return render(request, 'Reservation/Salle.html',reservation) 
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else: 
+        salle = Salle.objects.all()
+        res_salle = Reservation_salle.objects.all()
+        for s in res_salle:
+            n = s.salle.id
+            print(n)
+                
+        reservation = {'salle':salle,
+                    'res_salle' : res_salle,
+                    'n' : n,
+                    's' : s,
+                    'Reserver' : "Reserver",
+                    'Non_Reserver' : "Non Reserver"}
+        return render(request, 'Reservation/Salle.html',reservation) 
  
      
 #------------------------------------------------------------------table----------------------------------------------------------------
 
 def table(request):
-    table = Table.objects.all()
-    res_table = Reservation_table.objects.all()
-    for k in  res_table:
-        l = k.table.id
-        print(l)
-    context = {'table':table,
-               'res_table' : res_table,
-               'k' : k,
-               'l' :  l,
-               'Reserver' : "Reserver",
-               'Non_Reserver' : "Non Reserver"}
-    return render(request, 'Reservation/Table.html',context) 
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        table = Table.objects.all()
+        res_table = Reservation_table.objects.all()
+        for k in  res_table:
+            l = k.table.id
+            print(l)
+        context = {'table':table,
+                'res_table' : res_table,
+                'k' : k,
+                'l' :  l,
+                'Reserver' : "Reserver",
+                'Non_Reserver' : "Non_Reserver",
+                }
+        return render(request, 'Reservation/Table.html',context) 
 
 
 
@@ -149,8 +237,11 @@ def table(request):
 #---------------------------------------------------------------------------------------------------------------------------------------
 
 def client(request):
-    client = Client.objects.all()
-    return render(request, 'Reservation/Client.html',{'client':client})
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        client = Client.objects.all()
+        return render(request, 'Reservation/Client.html',{'client':client})
 
 
 
@@ -160,11 +251,13 @@ def client(request):
 #----------------------------------------------------------------------------------------------------------------------------------------------------
 #-----°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°---------------------------- FONCTION DE L'AJOUT--------°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
+def get(self, request, *args, **kwargs):
+    time.sleep(.10)
+    context = self.get_context_data()
+    return render(request, self.template, context)
 
 
-
-#-------------------------------------------------------------ajout un client----------------------------------------
-
+#-------------------------------------
 def ajout_client(request):
     if request.method=="POST":   
         nom = request.POST['nom']
@@ -179,80 +272,91 @@ def ajout_client(request):
 
 #----------------------------------------------------------------ajout une salle--------------------------------------
 
-
 def ajout_salle(request):
-    if request.method=="POST":   
-        numero = request.POST['numero']
-        type = request.POST['type']
-        c = Salle.objects.create(numero=numero, type = type )
-        c.save()
-        return redirect("/salle")
-    
-    return render(request, 'Reservation/ajout_salle.html')
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        if request.method=="POST":   
+            numero = request.POST['numero']
+            type = request.POST['type']
+            c = Salle.objects.create(numero=numero, type = type )
+            c.save()
+            return redirect("/salle")
+        
+        return render(request, 'Reservation/ajout_salle.html')
 
 
 #-----------------------------------------------------------------ajout une table -------------------------------------------
 
 
 def ajout_table(request):
-    if request.method=="POST":   
-        numero = request.POST['numero']
-        type = request.POST['type']
-        iddd = request.POST['idd']
-        salle = Salle.objects.get(id=iddd)
-        c = Table.objects.create(numero=numero, type=type, salle=salle )
-        c.save()
-        return redirect("/table")
-    salles = Salle.objects.all()
-    return render(request, 'Reservation/ajout_table.html',{'salles' : salles})
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        if request.method=="POST":   
+            numero = request.POST['numero']
+            type = request.POST['type']
+            iddd = request.POST['idd']
+            salle = Salle.objects.get(id=iddd)
+            c = Table.objects.create(numero=numero, type=type, salle=salle )
+            c.save()
+            return redirect("/table")
+        salles = Salle.objects.all()
+        return render(request, 'Reservation/ajout_table.html',{'salles' : salles})
 
 
 #-------------------------------------------------ajout reservation salle---------------------------------------------------------
 
 
 def ajout_reservation_salle(request):
-    if request.method=="POST":   
-        nom = request.POST['nom']
-        prenom = request.POST['prenom']
-        tel = request.POST['tel']
-        email = request.POST['email']
-        iddd = request.POST['idd']
-        date_reservation = request.POST['date_reservation']
-        salle = Salle.objects.get(id=iddd)
-        client = Client.objects.create(nom=nom, prenom=prenom, tel=tel, email=email)
-        r = Reservation_salle.objects.create(client = client, salle=salle, date_reservation = date_reservation)
-        client.save()
-        r.save()
-        idd = r.id 
-        nom = Reservation_salle.objects.all()
-        return render (request, 'Reservation/impression_salle_admin.html', {'idd': idd}) 
-    salles = Salle.objects.all()
-    return render(request, 'Reservation/Ajout_reservation_salle.html',{'salles':salles})
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        if request.method=="POST":   
+            nom = request.POST['nom']
+            prenom = request.POST['prenom']
+            tel = request.POST['tel']
+            email = request.POST['email']
+            iddd = request.POST['idd']
+            date_reservation = request.POST['date_reservation']
+            salle = Salle.objects.get(id=iddd)
+            client = Client.objects.create(nom=nom, prenom=prenom, tel=tel, email=email)
+            r = Reservation_salle.objects.create(client = client, salle=salle, date_reservation = date_reservation)
+            client.save()
+            r.save()
+            idd = r.id 
+            nom = Reservation_salle.objects.all()
+            return render (request, 'Reservation/impression_salle_admin.html', {'idd': idd}) 
+        salles = Salle.objects.all()
+        return render(request, 'Reservation/Ajout_reservation_salle.html',{'salles':salles})
 
 
 #--------------------------------------------------ajout reservation table------------------------------------
 
 
 def ajout_reservation_table(request):
-    if request.method=="POST":   
-        nom = request.POST['nom']
-        prenom = request.POST['prenom']
-        tel = request.POST['tel']
-        email = request.POST['email']
-        iddd = request.POST['idd']
-        date_reservation = request.POST['date_reservation']
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        if request.method=="POST":   
+            nom = request.POST['nom']
+            prenom = request.POST['prenom']
+            tel = request.POST['tel']
+            email = request.POST['email']
+            iddd = request.POST['idd']
+            date_reservation = request.POST['date_reservation']
+                
+            table = Table.objects.get(id=iddd)
             
-        table = Table.objects.get(id=iddd)
-        
-        client = Client.objects.create(nom=nom, prenom=prenom, tel=tel, email=email)
-        r = Reservation_table.objects.create(client = client, table=table, date_reservation = date_reservation )
-        client.save()
-        r.save() 
-        idd = r.id
-        return render(request, 'Reservation/impression_table_admin.html',{'idd': idd}) 
-           
-    tables = Table.objects.all()
-    return render(request,'Reservation/Ajout_reservation_table.html',{'tables' : tables} )
+            client = Client.objects.create(nom=nom, prenom=prenom, tel=tel, email=email)
+            r = Reservation_table.objects.create(client = client, table=table, date_reservation = date_reservation )
+            client.save()
+            r.save() 
+            idd = r.id
+            return render(request, 'Reservation/impression_table_admin.html',{'idd': idd}) 
+            
+        tables = Table.objects.all()
+        return render(request,'Reservation/Ajout_reservation_table.html',{'tables' : tables} )
 
 
 #---------------------------------------------------------------------------------------------------------------
@@ -262,67 +366,81 @@ def ajout_reservation_table(request):
 #----------------------------------------------Modifier Client ---------------------------------------------
 
 def modifier_client(request, myid):
-    cl = Client.objects.get(id=myid)
-    if request.method=="POST":   
-        cl.nom = request.POST['nom']
-        cl.prenom = request.POST['prenom']
-        cl.email = request.POST['email']
-        cl.tel = request.POST['tel']
-        cl.save()
-        return redirect("/client")  
-    return render(request, 'Reservation/Modifier_client.html', {'cl': cl}) 
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+
+        cl = Client.objects.get(id=myid)
+        if request.method=="POST":   
+            cl.nom = request.POST['nom']
+            cl.prenom = request.POST['prenom']
+            cl.email = request.POST['email']
+            cl.tel = request.POST['tel']
+            cl.save()
+            return redirect("/client")  
+        return render(request, 'Reservation/Modifier_client.html', {'cl': cl}) 
 
 #---------------------------------------------Modifier salle-------------------------------------------------------
 
 def modifier_salle(request, myid):
-    v = Salle.objects.get(id=myid)
-    if request.method=="POST":   
-        v.numero = request.POST['numero']
-        v.type = request.POST['type']
-        v.save()
-        return redirect("/salle")  
-    return render(request, 'Reservation/Modifier_salle.html', {'v': v})
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        v = Salle.objects.get(id=myid)
+        if request.method=="POST":   
+            v.numero = request.POST['numero']
+            v.type = request.POST['type']
+            v.save()
+            return redirect("/salle")  
+        return render(request, 'Reservation/Modifier_salle.html', {'v': v})
 
 
 #-----------------------------------------------modifier table------------------------------------------------------------------
 
 def modifier_table(request, myid):
-    t = Table.objects.get(id=myid)
-    if request.method=="POST":   
-       t.numero = request.POST['numero']
-       t.type = request.POST['type']
-       idddd = request.POST['idd']
-       salle = Salle.objects.get(id=idddd)
-       print(t.numero)
-       t.salle = salle
-       t.save()
-       print(t.numero)
-       return redirect("/table")
-    s = Salle.objects.all() 
-    return render(request, 'Reservation/Modifier_table.html',{'s' : s, 't' : t})
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        t = Table.objects.get(id=myid)
+        if request.method=="POST":   
+            t.numero = request.POST['numero']
+            t.type = request.POST['type']
+            idddd = request.POST['idd']
+            salle = Salle.objects.get(id=idddd)
+            print(t.numero)
+            t.salle = salle
+            t.save()
+            print(t.numero)
+            return redirect("/table")
+            s = Salle.objects.all() 
+            return render(request, 'Reservation/Modifier_table.html',{'s' : s, 't' : t})
 
 
 #-----------------------------------------------modifier reservation-salle-----------------------------#--
 
 
 def modifier_reservation_salle(request, myid):
-    S = Reservation_salle.objects.get(id=myid) 
-   
-    if request.method == "POST":
-       S.client.nom = request.POST['nom']
-       S.client.prenom = request.POST['prenom']
-       S.client.tel = request.POST['tel']
-       S.client.email = request.POST['email']
-       S.date_reservation = request.POST['date_reservation']
-       idddd = request.POST['idd']
-       S.sal = Salle.objects.get(id=idddd)
-       print(S.salle.numero)
-       S.salle = S.sal
-       S.save()
-       
-       return redirect("/reservation_salle")
-    salle = Salle.objects.all() 
-    return render(request, 'Reservation/Modifier_reservation_salle.html',{'salle' : salle,'S': S})
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+
+        S = Reservation_salle.objects.get(id=myid) 
+    
+        if request.method == "POST":
+            S.client.nom = request.POST['nom']
+            S.client.prenom = request.POST['prenom']
+            S.client.tel = request.POST['tel']
+            S.client.email = request.POST['email']
+            S.date_reservation = request.POST['date_reservation']
+            idddd = request.POST['idd']
+            S.sal = Salle.objects.get(id=idddd)
+            print(S.salle.numero)
+            S.salle = S.sal
+            S.save()
+            
+            return redirect("/reservation_salle")
+            salle = Salle.objects.all() 
+            return render(request, 'Reservation/Modifier_reservation_salle.html',{'salle' : salle,'S': S})
 
 
 
@@ -337,56 +455,74 @@ def modifier_reservation_salle(request, myid):
 
 
 def supprimer_client(request, myid):
-    client = Client.objects.filter(id=myid)
-    client.delete()
-    return redirect("/client") 
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+
+        client = Client.objects.filter(id=myid)
+        client.delete()
+        return redirect("/client") 
 
 
 
 #-----------------------------------------------supprimer une salle ---------------------------------------
 
-
 def supprimer_salle(request, myid):
-    salle = Salle.objects.filter(id=myid)
-    salle.delete()
-    return redirect("/salle")  
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        salle = Salle.objects.filter(id=myid)
+        salle.delete()
+        return redirect("/salle")  
 
 
 #-----------------------------------------------supprimer une table ---------------------------------------
 
 
 def supprimer_table(request, myid):
-    table = Table.objects.filter(id=myid)
-    table.delete()
-    return redirect("/table")  
- 
-  
-#-----------------------------------------------supprimer reservation salle ---------------------------------------
-  
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        table = Table.objects.filter(id=myid)
+        table.delete()
+        return redirect("/table")  
+    
+    
+
 def supprimer_reservation_salle(request, myid):
-    res = Reservation_salle.objects.filter(id=myid)
-    res.delete()
-    return redirect("/reservation_salle")
- 
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        res = Reservation_salle.objects.filter(id=myid)
+        res.delete()
+        return redirect("/reservation_salle")
+    
  
  
 #-----------------------------------------------supprimer reservation table ---------------------------------------
  
-  
+
 def supprimer_reservation_table(request, myid):
-    res = Reservation_table.objects.filter(id=myid)
-    res.delete()
-    return redirect("/reservation_table")  
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+
+        res = Reservation_table.objects.filter(id=myid)
+        res.delete()
+        return redirect("/reservation_table")  
 
 #-----------------------------------------------supprimer reservation salle table---------------------------------------
- 
+
 
 def supprimer_reservation_salle_table(request, myid,mid):
-    res_s = Reservation_salle.objects.filter(id=myid)
-    res_t = Reservation_table.objects.filter(id=mid)
-    res_s.delete()
-    res_t.delete()
-    return redirect("/reservation_salle_table")  
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        res_s = Reservation_salle.objects.filter(id=myid)
+        res_t = Reservation_table.objects.filter(id=mid)
+        res_s.delete()
+        res_t.delete()
+        return redirect("/reservation_salle_table")  
 
 
 
@@ -398,19 +534,22 @@ def supprimer_reservation_salle_table(request, myid,mid):
 #------------------------------------------------recherche client-----------------------------------------
 
 def rechercher_client(request):
-    if request.method=="POST":
-        tel = request.POST['tel']  
-        try:
-            re = Client.objects.get(tel = tel)
-            print(re.nom)
-            context ={'tel' : tel,
-                     're' : re}
-            return render(request, 'Reservation/Rechercher_client.html',context)
-        except:
-           return render(request, 'Reservation/Rechercher_client.html',{})
-    else: 
-        return render(request, 'Reservation/Rechercher_client.html',{})
-    
+    if not request.user.is_authenticated:
+        return redirect('login')
+    else:
+        if request.method=="POST":
+            tel = request.POST['tel']  
+            try:
+                re = Client.objects.get(tel = tel)
+                print(re.nom)
+                context ={'tel' : tel,
+                        're' : re}
+                return render(request, 'Reservation/Rechercher_client.html',context)
+            except:
+                return render(request, 'Reservation/Rechercher_client.html',{})
+        else: 
+            return render(request, 'Reservation/Rechercher_client.html',{})
+        
 
 #-------------------------------------------------recherche salle-----------------------------------------
 
@@ -455,7 +594,6 @@ def rechercher_table(request):
 
 #------------------------------------------------recherche reservation salle-----------------------------------------
 
- 
 def rechercher_reservation_salle(request):
     if request.method=="POST":
         tel = request.POST['tel']     
@@ -646,29 +784,11 @@ def contactez_nous(request):
 #--#---------------------------------------------------Connecter------------------------------------------------------------
 
 
-def login(request):
-    if request.method == "POST":
-        user = request.POST['username']
-        passs = request.POST['password']
-        user = authenticate(username=user, password=passs)
-        if user is not None:
-            if user.is_superuser:
-                
-                return redirect("/home")
-        else:   
-            msg = "Les données sont  erronés,ressayer"
-            return render(request, "Reservation/Login.html", {"msg":msg})
-    
-    return render (request, 'Reservation/Login.html')
-
-
-
 
 #---------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------FONCTION DE L AJOUT------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------
 
-
+    
 #-------------------------------------------------------------ajout reservation table client ----------------------------------
 
 
@@ -945,6 +1065,21 @@ def Billet_salle_table(request,myid,mid):
     except:
         return render (request, 'Reservation/Billet_salle_table.html',{})
  
+
+#----------------------------------------------------Avant impression ticket salle ! --------------------------------------------
+
+def impression_salle(request):
+    
+    return render (request, 'Reservation/impression_salle.html')
+
+#-----------------------------------------------------Avant impression ticket table !--------------------------------------------------------
+
+
+def impression_table(request):
+    
+    return render (request, 'Reservation/impression_table.html')
+
+
        
 
 
