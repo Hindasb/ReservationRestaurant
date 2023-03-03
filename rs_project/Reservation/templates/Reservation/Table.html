@@ -79,15 +79,25 @@
 </div>
 <!-- partial:index.partial.html -->
 <section class="container cd-table-container">
- 
-  
-  <table class="cd-table order-table table">
+  <div class="card mb-4">
+    <div class="card-body">
+        LISTE DES TABLE
+    </div>
+</div>
+  <div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-table me-1"></i>
+        Information sur les tables
+    </div>
+    <div class="card-body">
+        <table  class="table table-hover">
+
     <thead>
       <tr>
         <th>Numero</th>
         <th>Type</th>
         <th>Salle</th>
-        <th>Status</th>
+        
         <th>Action</th>
       </tr>
     </thead>
@@ -102,18 +112,7 @@
         <td>{{items.type}}</td>
         <td>{{items.salle}}</td>
         
-        <td> 
-         
-          {% if l == items.id%}
-          <h6> Reserver  <br>
-         
-            
-           {% else %}
-          <h6> No Reserver <br>
-            {% endif%}
-          
-         
-           </td>
+        
         <td><a  href="/modifier_table/{{items.id}}/" > <i class="fas fa-edit"></i></a> 
           <a class="text-danger" href="/supprimer_table/{{items.id}}/" ><i class="fas fa-trash-alt"></i></a>  </td>
            
