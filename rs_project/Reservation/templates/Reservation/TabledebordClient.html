@@ -1,0 +1,56 @@
+{% extends 'Reservation/mainClient.html' %}
+{% block content %}
+{% load static %}
+
+    <html lang="en">
+      <head>
+        
+        <title>Reservation  dans le restaurant </title>
+        
+        <!-- Style CSS -->
+        <link rel="stylesheet" href="{% static '/cardHorizontale/css/style.css '%}">
+        <!-- Demo CSS (No need to include it into your project) -->
+        <link rel="stylesheet" href="{% static '/cardHorizontale/css/demo.css '%}">
+     
+      </head>
+      <body>
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6" style="border:1px solid 
+        #ddd">
+         
+
+        <img src="{% static '/img _reservation/res36.jpg '%}" alt="responsive webite" class="img-fluid" width="900">
+      </div>
+      <div class="col-xl-6 col-lg-6 col-md-6" style="border:1px solid 
+  #ddd">
+  <center>
+<p></p>
+        <h2>Information Sur La Restaurant </h2>
+        <p></p>
+        <p>N'attendez plus Resrver tout les jours 24H/24H  sur le site internet  <a>www.teyba.mr </a>.</p>
+        <p>A Nouakchott, le restaurant TEYBA vous accueille tous les jours Sauf le dimanche .
+ 
+Nous vous proposons une cuisine exotique dans un cadre agréable et chaleureux, à deux pas des Grands magasins. Vous êtes tous les bienvenus !
+ 
+Le restaurant est également à votre disposition pour tous types d'évènements ( anniversaires, repas d'affaires...). N'hésitez pas à nous envoyer une demande si vous souhaitez le privatiser ! 
+ 
+À très bientôt !
+.</p>
+<img src="{% static '/img _reservation/res32.jpg '%}" alt="responsive webite" class="img-fluid" width="400">
+
+      </center>
+      </div>
+    </div>
+  </div>
+        
+      <footer class="credit">Elaborer Par:   KHADI, MEYMOUNE, HINDOU </footer>
+ <!-- Card Flip Js -->
+    <script src="{% static 'cardHorizontale/js/script.js' %}"></script>
+          
+      </body>
+    </html>
+
+
+      
+{% endblock %}

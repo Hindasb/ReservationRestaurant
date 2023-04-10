@@ -1,0 +1,125 @@
+{% extends 'Reservation/main.html' %}
+{% block content %}
+{% load static %}
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+
+<!------ Include the above in your HEAD tag ---------->
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css
+">
+<div class="container-fluid">
+  <!-- Display the main heading with a prominent style -->
+  <div class="jumbotron text-center" height="10">
+    <h3>Information sur les Reservation du restaurant </h3>
+  </div>
+  <div class="row">
+        <!-- Display some information about reservations -->
+<div class="col-md-3">
+  <div class="card bg-info text-white mb-3">
+    <div class="card-header">Reservations</div>
+    <div class="card-body">
+      <h5 class="card-title">{{ totale_reservations }}</h5>
+    </div>
+  </div>
+</div>
+
+<div class="col-md-3">
+  <div class="card bg-success text-white mb-3">
+    <div class="card-header">Salles</div>
+    <div class="card-body">
+      <h5 class="card-title">{{ nb_salle }}</h5>
+    </div>
+  </div>
+</div>
+
+<div class="col-md-3">
+  <div class="card bg-danger text-white mb-3">
+    <div class="card-header">Tables</div>
+    <div class="card-body">
+      <h5 class="card-title">{{ nb_table }}</h5>
+    </div>
+  </div>
+</div>
+
+<div class="col-md-3">
+  <div class="card bg-warning text-white mb-3">
+    <div class="card-header">Clients</div>
+    <div class="card-body">
+      <h5 class="card-title">{{ nb_client }}</h5>
+    </div>
+  </div>
+</div>
+
+<center>
+ <div class="row">
+   <div class="col-sm-3">
+    <div class="card border-info mx-sm-1 p-1">
+      <div class="text-info text-center mt-1"><h6> Resevation</h6></div>
+   </div>
+   </div>
+   <div class="col-sm-3">
+    <div class="card border-success mx-sm-1 p-1">
+      <div class="text-success text-center mt-1"><h6>Salle(s) reserver {{nb_reservation_salle}}</h6></div>
+   </div>
+   </div> <div class="col-sm-3">
+    <div class="card border-danger mx-sm-1 p-1">
+      <div class="text-danger text-center mt-1"><h6>Table(s) reserver : {{nb_reservation_table}}</h6></div>
+   </div>
+   </div>
+
+   <div class="col-sm-3">
+    <div class="card border-warning mx-sm-1 p-1">
+      <div class="text-warning text-center mt-1"><h6> ------------{{resrevation_table.date_reservation}} </h6></div>
+   </div>
+   </div>
+
+ <div class="row">
+  <div class="col-sm-3">
+    <div class="card border-info mx-sm-1 p-1">
+      <div class="text-info text-center "><h6>Reservation tables : {{nb_reservation_table}} </h6></div>
+   </div>
+   </div>
+  <div class="col-sm-3">
+    <div class="card border-success mx-sm-1 p-1">
+      <div class="text-success text-center mt-1"><h6> Salle(s) non reserver {{nb_salle_non_reserver}}</h6></div>
+   </div>
+   </div>
+   <div class="col-sm-3">
+    <div class="card border-danger mx-sm-1 p-1">
+      <div class="text-danger text-center mt-1"><h6>Table(s) non reserver : {{nb_table_non_reserver}}</h6></div>
+   </div>
+   </div>
+   <div class="col-sm-3">
+    <div class="card border-warning mx-sm-1 p-1">
+      <div class="text-warning text-center mt-1"><h6>-------------</h6></div>
+   </div>
+   </div>
+
+ <div class="row">
+  <div class="col-sm-3">
+    <div class="card border-info mx-sm-1 p-1">
+      <div class="text-info text-center mt-1"><h6>Reservation salles : {{nb_reservation_salle}}</h6></div>
+   </div>
+   </div>
+   <div class="col-sm-3">
+    <div class="card border-success mx-sm-1 p-1">
+      <div class="text-success text-center mt-1"><h6> Salle(s) Disponible : {{nb_salle_non_reserver}}</h6></div>
+   </div>
+   </div>
+
+  <div class="col-sm-3">
+    <div class="card border-danger mx-sm-1 p-1">
+      <div class="text-danger text-center mt-1"><h6>Table(s) Disponible {{nb_table_non_reserver}}</h6></div>
+   </div>
+   </div>
+   <div class="col-sm-3">
+    <div class="card border-warning mx-sm-1 p-1">
+      <div class="text-warning text-center mt-1"><h6> ---------</h6></div>
+   </div>
+   </div>
+
+</div>
+</center>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>   
+{% endblock %}
